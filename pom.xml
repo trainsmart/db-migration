@@ -35,6 +35,7 @@
     </prerequisites>
 
     <modules>
+        <module>c5-parent</module>
         <module>db-support</module>
         <module>db-migration</module>
         <module>db-migration-maven-plugin</module>
@@ -53,27 +54,12 @@
         <connection>scm:svn:https://c5-db-migration.googlecode.com/svn/trunk/</connection>
     </scm>
 
-    <repositories>
-        <repository>
-            <id>c5-public-repository</id>
-            <name>Carbon Five Public Repository</name>
-            <url>http://mvn.carbonfive.com/public</url>
-            <snapshots>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>jboss-repository</id>
-            <url>http://repository.jboss.org/maven2</url>
-        </repository>
-    </repositories>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.mockrunner</groupId>
-                <artifactId>mockrunner</artifactId>
-                <version>0.4</version>
+                <artifactId>mockrunner-all</artifactId>
+                <version>1.0.8</version>
                 <scope>test</scope>
             </dependency>
 
