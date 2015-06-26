@@ -130,6 +130,56 @@ public class DataSourceMigrationManager implements MigrationManager
         logger.info("Migrated database in " + DurationFormatUtils.formatDurationHMS(watch.getTime()) + ".");
     }
 
+    public void seed()
+    {
+        final Migration seed = migrationResolver.resolveSeed();
+
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        try
+        {
+            jdbcTemplate.execute(new ConnectionCallback<Object>()
+            {
+                public Object doInConnection(Connection connection) throws SQLException, DataAccessException
+                {
+                    final boolean autoCommit = connection.getAutoCommit();
+                    connection.setAutoCommit(false);
+
+                    try
+                    {
+                        logger.info("Running seed migration.");
+                        StopWatch migrationWatch = new StopWatch();
+                        migrationWatch.start();
+                        seed.migrate(dbType, connection);
+                        connection.commit();
+                    }
+                    catch (Throwable e)
+                    {
+                        String message = "Seed migration failed, rolling back and terminating migration.";
+                        logger.error(message, e);
+                        connection.rollback();
+                        throw new MigrationException(message, e);
+                    }
+                    finally
+                    {
+                        connection.setAutoCommit(autoCommit);
+                    }
+                    return null;
+                }
+            });
+        }
+        catch (DataAccessException e)
+        {
+            logger.error("Failed to seed database.", e);
+            throw new MigrationException(e);
+        }
+
+        watch.stop();
+
+        logger.info("Seeded database in " + DurationFormatUtils.formatDurationHMS(watch.getTime()) + ".");
+    }
+
     public void setDatabaseType(DatabaseType dbType)
     {
         this.dbType = dbType;

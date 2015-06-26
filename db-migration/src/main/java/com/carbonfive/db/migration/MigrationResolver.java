@@ -23,4 +23,11 @@ public interface MigrationResolver
      * @return a set of all available migrations, empty if no migrations are available
      */
     Set<Migration> resolve(DatabaseType dbType);
+
+    /**
+     * Get seed migration
+     *
+     * @return seed migration, null if there is no seeds defined
+     */
+    Migration resolveSeed();
 }

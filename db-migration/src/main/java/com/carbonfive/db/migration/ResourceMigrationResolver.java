@@ -32,6 +32,7 @@ import static org.springframework.util.StringUtils.collectionToCommaDelimitedStr
 public class ResourceMigrationResolver implements MigrationResolver
 {
     private static final String CLASSPATH_MIGRATIONS_SQL = "classpath:/db/migrations/";
+    private static final String SEED_MIGRATION = "seeds";
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -73,14 +74,15 @@ public class ResourceMigrationResolver implements MigrationResolver
             throw new MigrationException(e);
         }
 
-        // Remove resources starting with a '.' (e.g. .svn, .cvs, etc)
+        // Remove resources starting with a '.' (e.g. .svn, .cvs, etc) and seeds
         CollectionUtils.filter(resources, new Predicate()
         {
             public boolean evaluate(Object object)
             {
                 try
                 {
-                    return (((Resource) object).isReadable() && !((Resource) object).getFilename().startsWith("."));
+                    return (((Resource) object).isReadable() && !((Resource) object).getFilename().startsWith(".")) &&
+                            !((Resource) object).getFilename().startsWith(SEED_MIGRATION);
                 }
                 catch (Exception e)
                 {
@@ -119,6 +121,31 @@ public class ResourceMigrationResolver implements MigrationResolver
         }
 
         return migrations;
+    }
+
+    public Migration resolveSeed() {
+        // Find all resources in the migrations location.
+        String convertedMigrationsLocation = convertMigrationsLocation(migrationsLocation, DatabaseType.UNKNOWN);
+        PathMatchingResourcePatternResolver patternResolver = new PathMatchingResourcePatternResolver();
+        Resource[] resources;
+
+        try
+        {
+            resources = patternResolver.getResources(convertedMigrationsLocation + SEED_MIGRATION + "*");
+        }
+        catch (IOException e)
+        {
+            throw new MigrationException(e);
+        }
+
+        if (resources.length == 0)
+        {
+            String message = "No seeds were found using resource pattern '" + migrationsLocation + "'.";
+            logger.error(message);
+            throw new MigrationException(message);
+        }
+
+        return migrationFactory.create(SEED_MIGRATION, resources[0]);
     }
 
     public Set<Migration> resolve()
